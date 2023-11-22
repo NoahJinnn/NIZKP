@@ -191,6 +191,7 @@ fn main() {
         start_proof.elapsed().as_millis()
     );
 
+    // Print x and y coordinates of t
     let enc_point = dlog_proof.t.to_encoded_point(false);
     match enc_point.coordinates() {
         Coordinates::Uncompressed { x, y } => {
