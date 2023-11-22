@@ -33,12 +33,33 @@ impl DLogProof {
         let s = r + c * x;
         Self::new(t, s)
     }
+    fn verify(&self, sid: &str, pid: u32, y: ProjectivePoint) -> bool {
+        let c = Self::hash_points(sid, pid, &[ProjectivePoint::GENERATOR, y, self.t]);
+        let lhs = ProjectivePoint::GENERATOR * &self.s;
+        let rhs = &self.t + &(&y * &c);
+        lhs == rhs
+    }
     fn to_dict(&self) -> serde_json::Value {
         serde_json::json!({
             "t": self.t.to_affine().to_bytes().to_vec(),
             "s": self.s.to_bytes().to_vec(),
         })
     }
+
+    #[allow(dead_code)]
+    fn from_dict(data: serde_json::Value) -> Self {
+        let t = data["t"].clone();
+        let t_str = t.to_string();
+        let t_bytes = t_str.as_bytes();
+        let t = ProjectivePoint::from_bytes(t_bytes.into()).unwrap();
+
+        let s = data["s"].clone();
+        let s_str = s.to_string();
+        let s_bytes = s_str.as_bytes();
+        let s = <Scalar as Reduce<U256>>::reduce_bytes(s_bytes.into());
+        Self::new(t, s)
+    }
+  }
 fn main() {
     let sid = "sid";
     let pid: u32 = 1;
@@ -61,4 +82,17 @@ fn main() {
         _ => panic!("Invalid point encoding"),
     }
     println!("{}", dlog_proof.to_dict()["s"]);
+
+    let start_verify = std::time::Instant::now();
+    let result = dlog_proof.verify(sid, pid, y);
+    println!(
+        "Verify computation time: {} ms",
+        start_verify.elapsed().as_millis()
+    );
+
+    if result {
+        println!("DLOG proof is correct");
+    } else {
+        println!("DLOG proof is not correct");
+    }
     }
