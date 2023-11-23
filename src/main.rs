@@ -75,7 +75,6 @@ impl DLogProof {
     /// * `pid` - The id of the prover.
     /// * `x` - The secret number.
     /// * `y` - The point that we want to prove that we know the discrete logarithm of.
-    /// * `base_point` - The base point of the group.
     ///
     /// # Returns
     ///
@@ -108,7 +107,6 @@ impl DLogProof {
     /// * `sid` - The session id.
     /// * `pid` - The id of the prover.
     /// * `y` - The public key.
-    /// * `base_point` - The base point of the group.
     ///
     /// # Returns
     ///
