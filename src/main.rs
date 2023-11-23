@@ -47,7 +47,7 @@ impl DLogProof {
     /// # use k256::ProjectivePoint;
     /// let sid = "sid";
     /// let pid = 1;
-    /// let points = vec![ProjectivePoint::generator(); 3];
+    /// let points = vec![ProjectivePoint::GENERATOR; 3];
     /// let hash = DLogProof::hash_points(sid, pid, &points);
     /// println!("{}", hash);
     /// ```
@@ -90,10 +90,8 @@ impl DLogProof {
     /// let sid = "sid";
     /// let pid = 1;
     /// let x = generate_random_number();
-    /// let y = &x * &ProjectivePoint::generator();
+    /// let y = &x * &ProjectivePoint::GENERATOR;
     /// let dlog_proof = DLogProof::prove(sid, pid, x, y);
-    /// println!("{}, {}", dlog_proof.t.x(), dlog_proof.t.y());
-    /// println!("{}", dlog_proof.s);
     /// ```
     fn prove(sid: &str, pid: u32, x: Scalar, y: ProjectivePoint) -> Self {
         let r = generate_random_number();
@@ -125,7 +123,7 @@ impl DLogProof {
     /// let sid = "sid";
     /// let pid = 1;
     /// let x = generate_random_number();
-    /// let y = &x * &ProjectivePoint::generator();
+    /// let y = &x * &ProjectivePoint::GENERATOR;
     /// let dlog_proof = DLogProof::prove(sid, pid, x, y);
     /// assert!(dlog_proof.verify(sid, pid, y));
     /// ```
@@ -136,24 +134,6 @@ impl DLogProof {
         lhs == rhs
     }
 
-    /// Converts the `DLogProof` instance into a JSON object.
-    ///
-    /// This method serializes the `DLogProof` instance into a `serde_json::Value` object.
-    /// The `t` field of the `DLogProof` is converted to affine coordinates and then to bytes,
-    /// and the `s` field is directly converted to bytes. Both are then stored in a JSON object.
-    ///
-    /// # Returns
-    ///
-    /// A `serde_json::Value` representing the `DLogProof` instance.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use zk_proof::DLogProof;
-    /// let dlog_proof = DLogProof::new(/* parameters */);
-    /// let json = dlog_proof.to_dict();
-    /// println!("{}", json);
-    /// ```
     fn to_dict(&self) -> serde_json::Value {
         serde_json::json!({
             "t": self.t.to_affine().to_bytes().to_vec(),
@@ -212,5 +192,50 @@ fn main() {
         println!("DLOG proof is correct");
     } else {
         println!("DLOG proof is not correct");
+    }
+}
+
+// Implement tests
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hash_points() {
+        let sid = "sid";
+        let pid = 1;
+        let points = vec![ProjectivePoint::GENERATOR; 3];
+        let hash = DLogProof::hash_points(sid, pid, &points);
+        println!("{:?}", hash);
+    }
+
+    #[test]
+    fn test_verify() {
+        let sid = "sid";
+        let pid = 1;
+        let x = generate_random_number();
+        let y = ProjectivePoint::GENERATOR * &x;
+        let dlog_proof = DLogProof::prove(sid, pid, x, y);
+        assert!(dlog_proof.verify(sid, pid, y));
+    }
+
+    #[test]
+    fn test_verify_failed_wrong_pid() {
+        let sid = "sid";
+        let pid = 1;
+        let x = generate_random_number();
+        let y = ProjectivePoint::GENERATOR * &x;
+        let dlog_proof = DLogProof::prove(sid, pid, x, y);
+        assert!(!dlog_proof.verify(sid, pid, ProjectivePoint::GENERATOR));
+    }
+
+    #[test]
+    fn test_verify_failed_wrong_sid() {
+        let sid = "sid";
+        let pid = 1;
+        let x = generate_random_number();
+        let y = ProjectivePoint::GENERATOR * &x;
+        let dlog_proof = DLogProof::prove(sid, pid, x, y);
+        assert!(!dlog_proof.verify("abc", pid, ProjectivePoint::GENERATOR));
     }
 }
